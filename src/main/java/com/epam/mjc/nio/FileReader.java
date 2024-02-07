@@ -2,7 +2,6 @@ package com.epam.mjc.nio;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -15,7 +14,12 @@ import java.util.regex.Pattern;
 public class FileReader {
 
     public Profile getDataFromFile(File file) {
-        String fileData = readFile(file);
+        String fileData = null;
+        try {
+            fileData = readFile(file);
+        } catch (FileNotFoundException e) {
+            throw new FileReaderException("Not file found: "+ file.getAbsolutePath(), e);
+        }
 
         String name = extractValueForKey("Name", fileData);
         int age = Integer.parseInt(extractValueForKey("Age", fileData));
@@ -25,7 +29,7 @@ public class FileReader {
         return new Profile(name, age, email, phone);
     }
 
-    public String readFile(File file){
+    public String readFile(File file) throws FileNotFoundException {
         StringBuilder stringBuilder = new StringBuilder();
 
         try (FileInputStream fileInputStream = new FileInputStream(file);){
@@ -42,8 +46,10 @@ public class FileReader {
             }
             return stringBuilder.toString();
 
-        }catch (IOException e) {
-            throw new RuntimeException(e);
+        }catch (RuntimeException e) {
+            throw new FileReaderException("Error reading file: " + file.getAbsolutePath(), e);
+        } catch (IOException e) {
+            throw new FileNotFoundException("Not file found: "+ file.getAbsolutePath(), e);
         }
     }
 
